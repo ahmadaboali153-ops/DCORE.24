@@ -1,0 +1,1 @@
+(function(){var e=document.createElement('script');e.type='application/json';e.id="seed";e.textContent="{\"wos\": [], \"mats\": [], \"items\": [], \"lists\": {}, \"typeEn\": {}, \"staff\": [], \"cfg\": {}, \"att\": {}, \"users\": [], \"wos10\": [], \"arch\": {\"wos\": [], \"parts\": []}}";document.head.appendChild(e)})();
