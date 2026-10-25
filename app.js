@@ -294,6 +294,7 @@ const Cloud = {
   refresh() {
     const ks = [...this.dirtyK]; this.dirtyK.clear();
     try {
+      if (ks.includes('lists')) ensureLists();
       if (ks.includes('wos')) reindex(); if (ks.includes('items')) reindexItems();
       if (typeof AUD !== 'undefined' && ME) ks.forEach(k => { if (AUD.base && !A_SKIP.has(k)) AUD.base[k] = aMap(k); });
       if (ks.includes('perms')) { footUpdate(); try { buildNav(); } catch (e) { } }
@@ -619,11 +620,17 @@ function loadSeed() {
   S.items = d.items; S.lists = d.lists; S.lists.typeEn = d.typeEn; S.staff = d.staff; S.cfg = d.cfg; S.daily = {}; S.att = JSON.parse(JSON.stringify(d.att || {}));
   S.meta = { seeded: Date.now(), lastBackup: 0, att26: 1, wos10: 2 };
 }
+/* لو قوائم الاختيار ناقصة (مثلاً مستند القوائم مش في السحابة) نبنيها من أوامر الشغل نفسها بدل ما الصفحات تقع */
+function ensureLists() {
+  const L = S.lists && typeof S.lists === 'object' ? S.lists : (S.lists = {}), uniq = f => [...new Set((S.wos || []).map(w => String(w[f] || '').trim()).filter(Boolean))];
+  [['types', 'type'], ['jobs', 'job'], ['engs', 'eng'], ['techs', 'tech']].forEach(([k, f]) => { if (!Array.isArray(L[k])) L[k] = k === 'jobs' ? [...new Set(['صيانة دورية', 'صيانة تصحيحية', 'تشغيل', ...uniq('job')])] : uniq(f); });
+  if (!L.typeEn || typeof L.typeEn !== 'object') L.typeEn = {};
+}
 async function loadAll() {
   await Store.init();
   { const vs = await Promise.all(KEYS.map(k => Store.get(k))); KEYS.forEach((k, i) => { S[k] = vs[i] ?? S[k]; }); }
   if (!S.wos.length && !S.meta.seeded && Cloud.mode !== 'live') { loadSeed(); for (const k of KEYS) await Store.set(k, S[k]); }
-  S.lists.typeEn = S.lists.typeEn || {};
+  ensureLists();
   const sd = JSON.parse($('#seed').textContent); S.arch = sd.arch || { wos: [], parts: [] };
   if (!S.meta.items25 && S.arch.items) { const have = new Set(S.items.map(i => i[0])); S.arch.items.forEach(i => { if (!have.has(i[0])) { S.items.push(i); have.add(i[0]); } }); S.meta.items25 = 1; save('items', 'meta'); }
   if (!S.att) S.att = {};
@@ -1117,7 +1124,7 @@ function viewDash() {
   $('#df_month').onchange = e => { DF.month = e.target.value; viewDash(); };
   $('#df_year').onchange = e => { DF.year = e.target.value; DF.month = ''; viewDash(); };
 }
-const L_JOBS = () => S.lists.jobs;
+const L_JOBS = () => (S.lists && S.lists.jobs) || [];
 
 
 ;
