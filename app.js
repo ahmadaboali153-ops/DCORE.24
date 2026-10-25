@@ -806,11 +806,11 @@ function woModal(id, preset) {
 
 ;
 /* ========== شاشة سجل الشغل ========== */
-const LF = { q: '', month: '', type: '', job: '', eng: '', status: '', flag: '', page: 0 };
+const LF = { q: '', month: '', type: '', job: '', eng: '', status: '', flag: '', per: '', page: 0 };
 const PAGE = 50;
 function filteredWos() {
   const q = LF.q.trim().toLowerCase();
-  return S.wos.filter(w => (!LF.month || ymOf(w.date) === LF.month) && (!LF.type || w.type === LF.type) && (!LF.job || w.job === LF.job) && (!LF.eng || w.eng === LF.eng) && (!LF.status || (w.status || 'pass') === LF.status) && (!LF.flag || (LF.flag === 'late' ? (w.status || 'pass') !== 'pass' && w.date && w.date <= ymdAgo(+(S.cfg && S.cfg.remindDays) || 3) : (w.status || 'pass') === 'pass' && (!one(w.tech) || !one(w.report))))
+  return S.wos.filter(w => (!LF.per || w.per === LF.per) && (!LF.month || ymOf(w.date) === LF.month) && (!LF.type || w.type === LF.type) && (!LF.job || w.job === LF.job) && (!LF.eng || w.eng === LF.eng) && (!LF.status || (w.status || 'pass') === LF.status) && (!LF.flag || (LF.flag === 'late' ? (w.status || 'pass') !== 'pass' && w.date && w.date <= ymdAgo(+(S.cfg && S.cfg.remindDays) || 3) : (w.status || 'pass') === 'pass' && (!one(w.tech) || !one(w.report))))
     && (!q || (w.code + ' ' + w.loc + ' ' + w.req + ' ' + w.report + ' ' + w.tech + ' ' + w.matsText).toLowerCase().includes(q)))
     .map((w, i) => [w, i]).sort((A, B) => B[0].date.localeCompare(A[0].date) || (B[0].time || '').localeCompare(A[0].time || '') || B[0].code.localeCompare(A[0].code, 'en', { numeric: true }) || B[1] - A[1]).map(x => x[0]);
 }
@@ -819,12 +819,13 @@ function viewLog() {
   $('#view').innerHTML = `<div class="tools">
    <input type="search" id="lf_q" placeholder="🔍 بحث بالكود أو الموقع أو الأعمال أو الفني..." style="width:300px" value="${esc(LF.q)}">
    <select id="lf_month">${monthOpts(LF.month, 'كل الشهور')}</select>
+   ${(() => { const ps = [...new Set(S.wos.map(w => w.per).filter(Boolean))].sort().reverse(); return ps.length ? `<select id="lf_per"><option value="">كل الملفات المرفوعة</option>${ps.map(p => `<option${LF.per === p ? ' selected' : ''}>${p}</option>`).join('')}</select>` : ''; })()}
    <select id="lf_type">${opts(L.types, LF.type, 'كل أنواع الشبكات')}</select>
    <select id="lf_job">${opts(L.jobs, LF.job, 'كل أنواع الأعمال')}</select>
    <select id="lf_eng">${opts(L.engs, LF.eng, 'كل المسؤولين')}</select>
    <select id="lf_status"><option value="">كل الحالات</option>${Object.entries(STATUS).map(([k, v]) => `<option value="${k}"${LF.status === k ? ' selected' : ''}>${v}</option>`).join('')}</select>
    ${LF.flag ? `<button class="btn sm" data-act="lfclear">✕ ${LF.flag === 'late' ? 'المتأخرة فقط' : 'الناقصة فقط'}</button>` : ''}<span class="sp"></span><button class="btn ghost" data-act="printlog">🖨 طباعة</button><button class="btn ghost" data-act="exportlogtpl" title="الشيت الأصلي بنفس تنسيقه، لشهر واحد">⬇ تصدير بشكل الشيت الأصلي</button><button class="btn ghost" data-act="exportlog">⬇ تصدير Excel (مبسط)</button><button class="btn" data-act="newwo">+ أمر شغل جديد</button></div><div id="logTable"></div>`;
-  ['q', 'month', 'type', 'job', 'eng', 'status'].forEach(k => $('#lf_' + k).addEventListener(k === 'q' ? 'input' : 'change', e => { LF[k] = e.target.value; LF.page = 0; renderLogTable(); }));
+  ['q', 'month', 'per', 'type', 'job', 'eng', 'status'].forEach(k => $('#lf_' + k) && $('#lf_' + k).addEventListener(k === 'q' ? 'input' : 'change', e => { LF[k] = e.target.value; LF.page = 0; renderLogTable(); }));
   renderLogTable();
 }
 function renderLogTable() {
@@ -1307,6 +1308,14 @@ function parseDate(v) {
   const m = String(v).match(/(\d{1,2})[\\/\-.](\d{1,2})[\\/\-.](\d{4})/); return m ? `${m[3]}-${String(+m[2]).padStart(2, '0')}-${String(+m[1]).padStart(2, '0')}` : '';
 }
 const cellTxt = v => (v === undefined || v === null) ? '' : (typeof v === 'string' ? v.replace(/ /g, ' ').trim() : String(v));
+
+function perPicker(recs, id) {
+  const c = {}; recs.forEach(r => { const y = ymOf(r.date); if (y) c[y] = (c[y] || 0) + 1; });
+  const top = Object.keys(c).sort((a, b) => c[b] - c[a])[0] || ymOf(new Date().toISOString().slice(0, 10)), [ty, tm] = top.split('-'), yr = new Date().getFullYear();
+  const mn = ['يناير','فبراير','مارس','أبريل','مايو','يونيو','يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'];
+  return `<div class="tools" style="margin:8px 0"><b>الملف ده بتاع:</b><select id="${id}_m">${mn.map((n, i) => `<option value="${String(i + 1).padStart(2, '0')}"${+tm === i + 1 ? ' selected' : ''}>${n}</option>`).join('')}</select><select id="${id}_y">${[yr + 1, yr, yr - 1, yr - 2, yr - 3].map(y => `<option${+ty === y ? ' selected' : ''}>${y}</option>`).join('')}</select></div>`;
+}
+const perVal = (ov, id) => $('#' + id + '_y', ov).value + '-' + $('#' + id + '_m', ov).value;
 async function importLog(file) {
   let sheets; try { sheets = await readXlsx(file); } catch (e) { return toast('تعذر قراءة الملف: ' + e.message); }
   const recs = []; let skipped = 0;
@@ -1325,10 +1334,10 @@ async function importLog(file) {
   }
   if (!recs.length) return toast('مالقيتش أوامر شغل في الملف. تأكد إنه بنفس شكل اللوج شيت.');
   const fresh = recs.filter(r => !woIdx.has(r.code)), ex = recs.length - fresh.length;
-  const ov = modal('استيراد أوامر شغل', `<p>اتقرا <b>${recs.length}</b> أمر شغل من الملف:</p><ul><li><b>${fresh.length}</b> أمر جديد هيتضاف</li><li><b>${ex}</b> أمر موجود بالفعل (نفس الكود)</li>${skipped ? `<li>${skipped} صف تم تجاهله لعدم وجود تاريخ</li>` : ''}</ul><label><input type="checkbox" id="imp_upd"> حدّث بيانات الأوامر الموجودة بالقيم الجديدة من الملف</label>`, `<span class="sp"></span><button class="btn ghost" data-close>إلغاء</button><button class="btn" data-act="go">تنفيذ الاستيراد</button>`);
+  const ov = modal('استيراد أوامر شغل', `<p>اتقرا <b>${recs.length}</b> أمر شغل من الملف:</p><ul><li><b>${fresh.length}</b> أمر جديد هيتضاف</li><li><b>${ex}</b> أمر موجود بالفعل (نفس الكود)</li>${skipped ? `<li>${skipped} صف تم تجاهله لعدم وجود تاريخ</li>` : ''}</ul>${perPicker(recs, 'ip')}<label><input type="checkbox" id="imp_upd"> حدّث بيانات الأوامر الموجودة بالقيم الجديدة من الملف</label>`, `<span class="sp"></span><button class="btn ghost" data-close>إلغاء</button><button class="btn" data-act="go">تنفيذ الاستيراد</button>`);
   ov.addEventListener('click', e => {
     if (!e.target.closest('[data-act="go"]')) return;
-    const upd = $('#imp_upd', ov).checked; let a = 0, u = 0;
+    const upd = $('#imp_upd', ov).checked, per = perVal(ov, 'ip'); let a = 0, u = 0; recs.forEach(r => r.per = per);
     for (const r of recs) {
       const cur = woIdx.get(r.code);
       if (cur) { if (upd) { if (XL_AUTO) { const { status, ...rest } = r; Object.keys(rest).forEach(k => { if (rest[k] !== '' && rest[k] != null) cur[k] = rest[k]; }); } else Object.assign(cur, r); u++; } } else { const w = { id: uid(), ...r }; S.wos.push(w); woIdx.set(w.code, w); a++; }
@@ -1354,8 +1363,8 @@ async function importMats(file) {
   }
   if (!recs.length) return toast('مالقيتش سطور خامات. تأكد إن الملف بنفس شكل شيت الاعتماد.');
   const key = m => [m.wo, m.itemCode, m.name, num(m.issued), num(m.used)].join('|'), have = new Set(S.mats.map(key)), fresh = recs.filter(r => !have.has(key(r)));
-  const ov = modal('استيراد خامات', `<p>اتقرا <b>${recs.length}</b> سطر خامات:</p><ul><li><b>${fresh.length}</b> سطر جديد هيتضاف</li><li><b>${recs.length - fresh.length}</b> سطر موجود بالفعل وهيتجاهل</li></ul>`, `<span class="sp"></span><button class="btn ghost" data-close>إلغاء</button><button class="btn" data-act="go">تنفيذ الاستيراد</button>`);
-  ov.addEventListener('click', e => { if (!e.target.closest('[data-act="go"]')) return; const items = XL_AUTO ? (() => { const wos = new Set(recs.map(x => x.wo).filter(Boolean)); S.mats = S.mats.filter(m => !wos.has(m.wo)); return recs.filter(x => x.wo || !have.has(key(x))); })() : fresh; items.forEach(r => S.mats.push({ id: uid(), ...r })); save('mats'); closeModal(ov); toast(`تمت إضافة ${fresh.length} سطر`); route(); });
+  const ov = modal('استيراد خامات', `<p>اتقرا <b>${recs.length}</b> سطر خامات:</p><ul><li><b>${fresh.length}</b> سطر جديد هيتضاف</li><li><b>${recs.length - fresh.length}</b> سطر موجود بالفعل وهيتجاهل</li></ul>${perPicker(recs, 'ip')}`, `<span class="sp"></span><button class="btn ghost" data-close>إلغاء</button><button class="btn" data-act="go">تنفيذ الاستيراد</button>`);
+  ov.addEventListener('click', e => { if (!e.target.closest('[data-act="go"]')) return; const per = perVal(ov, 'ip'); recs.forEach(r => r.per = per); const items = XL_AUTO ? (() => { const wos = new Set(recs.map(x => x.wo).filter(Boolean)); S.mats = S.mats.filter(m => !wos.has(m.wo)); return recs.filter(x => x.wo || !have.has(key(x))); })() : fresh; items.forEach(r => S.mats.push({ id: uid(), ...r })); save('mats'); closeModal(ov); toast(`تمت إضافة ${fresh.length} سطر`); route(); });
 }
 async function importItems(file) {
   let sheets; try { sheets = await readXlsx(file); } catch (e) { return toast('تعذر قراءة الملف'); }
