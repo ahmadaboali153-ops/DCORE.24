@@ -621,6 +621,9 @@ function loadSeed() {
   S.meta = { seeded: Date.now(), lastBackup: 0, att26: 1, wos10: 2 };
 }
 /* لو قوائم الاختيار ناقصة (مثلاً مستند القوائم مش في السحابة) نبنيها من أوامر الشغل نفسها بدل ما الصفحات تقع */
+/* أمر الشغل الحقيقي = كود + تاريخ + بيانات فعلية (موقع أو أعمال مطلوبة أو تقرير أو نوع). الكود لوحده مش أمر شغل ومبيتحسبش. */
+const woReal = w => !!(w && w.code && w.date && (one(w.loc) || one(w.req) || one(w.report) || one(w.type) || one(w.job)));
+const woShell = w => !!(w && !woReal(w));
 function ensureLists() {
   const L = S.lists && typeof S.lists === 'object' ? S.lists : (S.lists = {}), uniq = f => [...new Set((S.wos || []).map(w => String(w[f] || '').trim()).filter(Boolean))];
   [['types', 'type'], ['jobs', 'job'], ['engs', 'eng'], ['techs', 'tech']].forEach(([k, f]) => { if (!Array.isArray(L[k])) L[k] = k === 'jobs' ? [...new Set(['صيانة دورية', 'صيانة تصحيحية', 'تشغيل', ...uniq('job')])] : uniq(f); });
@@ -806,11 +809,11 @@ function woModal(id, preset) {
 
 ;
 /* ========== شاشة سجل الشغل ========== */
-const LF = { q: '', month: '', type: '', job: '', eng: '', status: '', flag: '', per: '', page: 0 };
+const LF = { q: '', month: '', type: '', job: '', eng: '', status: '', flag: '', per: '', shell: false, page: 0 };
 const PAGE = 50;
 function filteredWos() {
   const q = LF.q.trim().toLowerCase();
-  return S.wos.filter(w => (!LF.per || w.per === LF.per) && (!LF.month || ymOf(w.date) === LF.month) && (!LF.type || w.type === LF.type) && (!LF.job || w.job === LF.job) && (!LF.eng || w.eng === LF.eng) && (!LF.status || (w.status || 'pass') === LF.status) && (!LF.flag || (LF.flag === 'late' ? (w.status || 'pass') !== 'pass' && w.date && w.date <= ymdAgo(+(S.cfg && S.cfg.remindDays) || 3) : (w.status || 'pass') === 'pass' && (!one(w.tech) || !one(w.report))))
+  return S.wos.filter(w => (LF.shell ? woShell(w) : woReal(w)) && (!LF.per || w.per === LF.per) && (!LF.month || ymOf(w.date) === LF.month) && (!LF.type || w.type === LF.type) && (!LF.job || w.job === LF.job) && (!LF.eng || w.eng === LF.eng) && (!LF.status || (w.status || 'pass') === LF.status) && (!LF.flag || (LF.flag === 'late' ? (w.status || 'pass') !== 'pass' && w.date && w.date <= ymdAgo(+(S.cfg && S.cfg.remindDays) || 3) : (w.status || 'pass') === 'pass' && (!one(w.tech) || !one(w.report))))
     && (!q || (w.code + ' ' + w.loc + ' ' + w.req + ' ' + w.report + ' ' + w.tech + ' ' + w.matsText).toLowerCase().includes(q)))
     .map((w, i) => [w, i]).sort((A, B) => B[0].date.localeCompare(A[0].date) || (B[0].time || '').localeCompare(A[0].time || '') || B[0].code.localeCompare(A[0].code, 'en', { numeric: true }) || B[1] - A[1]).map(x => x[0]);
 }
@@ -824,15 +827,15 @@ function viewLog() {
    <select id="lf_job">${opts(L.jobs, LF.job, 'كل أنواع الأعمال')}</select>
    <select id="lf_eng">${opts(L.engs, LF.eng, 'كل المسؤولين')}</select>
    <select id="lf_status"><option value="">كل الحالات</option>${Object.entries(STATUS).map(([k, v]) => `<option value="${k}"${LF.status === k ? ' selected' : ''}>${v}</option>`).join('')}</select>
-   ${LF.flag ? `<button class="btn sm" data-act="lfclear">إلغاء: ${LF.flag === 'late' ? 'المتأخرة فقط' : 'الناقصة فقط'}</button>` : ''}<span class="sp"></span><button class="btn ghost" data-act="printlog">طباعة</button><button class="btn ghost" data-act="exportlogtpl" title="الشيت الأصلي بنفس تنسيقه، لشهر واحد">تصدير بشكل الشيت الأصلي</button><button class="btn ghost" data-act="exportlog">تصدير Excel (مبسط)</button><button class="btn" data-act="newwo">+ أمر شغل جديد</button></div><div id="logTable"></div>`;
+   ${(() => { const n = S.wos.filter(woShell).length; return n || LF.shell ? `<button class="btn ${LF.shell ? '' : 'ghost'} sm" data-act="lfshell">${LF.shell ? 'رجوع للأوامر' : 'أكواد فاضية (' + n + ')'}</button>` + (LF.shell && n && canDel() ? `<button class="btn red sm" data-act="lfshelldel">حذف الأكواد الفاضية (${n})</button>` : '') : ''; })()}${LF.flag ? `<button class="btn sm" data-act="lfclear">إلغاء: ${LF.flag === 'late' ? 'المتأخرة فقط' : 'الناقصة فقط'}</button>` : ''}<span class="sp"></span><button class="btn ghost" data-act="printlog">طباعة</button><button class="btn ghost" data-act="exportlogtpl" title="الشيت الأصلي بنفس تنسيقه، لشهر واحد">تصدير بشكل الشيت الأصلي</button><button class="btn ghost" data-act="exportlog">تصدير Excel (مبسط)</button><button class="btn" data-act="newwo">+ أمر شغل جديد</button></div><div id="logTable"></div>`;
   ['q', 'month', 'per', 'type', 'job', 'eng', 'status'].forEach(k => $('#lf_' + k) && $('#lf_' + k).addEventListener(k === 'q' ? 'input' : 'change', e => { LF[k] = e.target.value; LF.page = 0; renderLogTable(); }));
   renderLogTable();
 }
 function renderLogTable() {
   const rows = filteredWos(), pages = Math.max(1, Math.ceil(rows.length / PAGE)); LF.page = Math.min(LF.page, pages - 1);
   const slice = rows.slice(LF.page * PAGE, LF.page * PAGE + PAGE), first = LF.page === 0 ? rows[0] : null, mc = {}; S.mats.forEach(m => mc[m.wo] = (mc[m.wo] || 0) + 1);
-  $('#logTable').innerHTML = `<div class="tblwrap"><table class="t"><thead><tr><th>التاريخ</th><th>الموقع</th><th>الكود</th><th>الشبكة</th><th>نوع الأعمال</th><th>الأعمال المطلوبة</th><th>المسؤول</th><th>القائم بالعمل</th><th>الحالة</th><th class="num">خامات</th></tr></thead><tbody>${slice.map(w => `<tr class="row" data-act="openwo" data-id="${w.id}"><td class="wdt"><b>${fmtDate(w.date)}</b><small>${esc(w.time || '')}${first === w ? ' <em class="newb">الأحدث</em>' : ''}</small></td><td class="wloc"><b>${esc(w.loc)}</b></td><td dir="ltr" style="text-align:right;white-space:nowrap">${esc(w.code.replace('FM-HILL-MDK-', ''))}</td><td>${esc(w.type)}</td><td>${jobTag(w.job)}</td><td class="wrap">${esc((w.req || '').slice(0, 140))}</td><td style="white-space:nowrap">${esc(w.eng)}</td><td>${esc(w.tech)}</td><td>${stBadge(w.status)}</td><td class="num">${mc[w.code] || ''}</td></tr>`).join('') || '<tr><td colspan="10" class="muted" style="padding:30px;text-align:center">مفيش نتائج</td></tr>'}</tbody></table></div>
-   <div class="pager"><span>${rows.length} أمر شغل (من ${S.wos.length})</span><span class="sp" style="flex:1"></span><button class="btn ghost sm" data-act="pg" data-d="-1" ${LF.page === 0 ? 'disabled' : ''}>السابق ›</button><span>صفحة ${LF.page + 1} من ${pages}</span><button class="btn ghost sm" data-act="pg" data-d="1" ${LF.page >= pages - 1 ? 'disabled' : ''}>‹ التالي</button></div>`;
+  $('#logTable').innerHTML = `<div class="tblwrap"><table class="t"><thead><tr><th>الكود</th><th>التاريخ</th><th>الموقع</th><th>الشبكة</th><th>نوع الأعمال</th><th>الأعمال المطلوبة</th><th>المسؤول</th><th>القائم بالعمل</th><th>الحالة</th><th class="num">خامات</th></tr></thead><tbody>${slice.map(w => `<tr class="row" data-act="openwo" data-id="${w.id}"><td class="wcode" dir="ltr">${esc(w.code.replace('FM-HILL-MDK-', ''))}</td><td class="wdt"><b>${fmtDate(w.date)}</b><small>${esc(w.time || '')}${first === w ? ' <em class="newb">الأحدث</em>' : ''}</small></td><td class="wloc"><b>${esc(w.loc)}</b></td><td>${esc(w.type)}</td><td>${jobTag(w.job)}</td><td class="wrap">${esc((w.req || '').slice(0, 140))}</td><td style="white-space:nowrap">${esc(w.eng)}</td><td>${esc(w.tech)}</td><td>${stBadge(w.status)}</td><td class="num">${mc[w.code] || ''}</td></tr>`).join('') || '<tr><td colspan="10" class="muted" style="padding:30px;text-align:center">مفيش نتائج</td></tr>'}</tbody></table></div>
+   <div class="pager"><span>${rows.length} ${LF.shell ? 'كود فاضي' : 'أمر شغل'} (من ${S.wos.filter(woReal).length})</span><span class="sp" style="flex:1"></span><button class="btn ghost sm" data-act="pg" data-d="-1" ${LF.page === 0 ? 'disabled' : ''}>السابق ›</button><span>صفحة ${LF.page + 1} من ${pages}</span><button class="btn ghost sm" data-act="pg" data-d="1" ${LF.page >= pages - 1 ? 'disabled' : ''}>‹ التالي</button></div>`;
 }
 function exportLog() {
   const rows = filteredWos().sort((a, b) => a.date.localeCompare(b.date) || a.code.localeCompare(b.code, 'en', { numeric: true }));
@@ -1030,14 +1033,14 @@ function bars(list, color) {
 const tally = (arr, f) => { const m = new Map(); arr.forEach(x => { const k = f(x); if (k) m.set(k, (m.get(k) || 0) + 1); }); return [...m.entries()].sort((a, b) => b[1] - a[1]); };
 const yOf = d => (d || '').slice(0, 4);
 function dashYears() {
-  const ys = new Set(S.wos.map(w => yOf(w.date)).filter(y => /^\d{4}$/.test(y))), live = [...ys].sort().reverse();
+  const ys = new Set(S.wos.filter(woReal).map(w => yOf(w.date)).filter(y => /^\d{4}$/.test(y))), live = [...ys].sort().reverse();
   const arch = (S.arch && S.arch.wos || []).some(w => w.date) && !ys.has('2025');
   return { live, arch, all: arch ? [...live, '2025'].sort().reverse() : live };
 }
 function dashData(year) {
   const Y = dashYears();
   if (!Y.live.includes(year) && year === '2025' && Y.arch) return { arch: true, ws: S.arch.wos.map(w => ({ date: w.date, job: w.job, type: w.type, eng: w.eng, loc: w.loc, tech: w.tech, status: 'pass' })), ms: S.arch.parts.map(p => ({ date: p.date, name: p.name, itemCode: p.code, used: p.qty })) };
-  return { arch: false, ws: S.wos.filter(w => yOf(w.date) === year), ms: S.mats.map(m => ({ date: matInfo(m).date, name: m.name, itemCode: m.itemCode, used: m.used })).filter(m => yOf(m.date) === year) };
+  return { arch: false, ws: S.wos.filter(w => woReal(w) && yOf(w.date) === year), ms: S.mats.map(m => ({ date: matInfo(m).date, name: m.name, itemCode: m.itemCode, used: m.used })).filter(m => yOf(m.date) === year) };
 }
 /* ---- مكوّنات الرسم (SVG بدون مكتبات) ---- */
 const HX = { cor: '#C43232', pre: '#2457C5', opr: '#0F7C77', oth: '#8896A8', ok: '#18794E', warn: '#A15C00', navy: '#142B4A' };
@@ -1244,14 +1247,16 @@ function checkSections() {
   const mrow = x => `<div class="issue"><span dir="ltr" style="flex:0 0 120px;text-align:right">${esc(x.m.wo.replace('FM-HILL-MDK-', '')) || '—'}</span><span>${esc(x.m.name || x.m.itemCode)} · ${fmtNum(num(x.m.used))} ${esc(x.m.unit)} <span class="muted">— ${x.f.join('، ')}</span></span><button class="btn ghost sm" data-act="openmat" data-id="${x.m.id}">فتح</button></div>`;
   const cnt = {}; S.wos.forEach(w => cnt[w.code] = (cnt[w.code] || 0) + 1);
   const srt = a => a.sort((x, y) => (y.date || '').localeCompare(x.date || '') || y.code.localeCompare(x.code));
-  const W = (k, title, fn) => ({ k, title, items: srt(S.wos.filter(fn)), render: wo });
+  const W = (k, title, fn) => ({ k, title, items: srt(S.wos.filter(w => woReal(w) && fn(w))), render: wo });
   const nums = S.wos.map(w => /-(\d+)$/.exec(w.code)).filter(Boolean).map(m => +m[1]).sort((a, b) => a - b), have = new Set(nums), gaps = [];
   if (nums.length) { const lo = Math.max(nums[0], nums[nums.length - 1] - 600); for (let n = lo; n <= nums[nums.length - 1]; n++) if (!have.has(n)) gaps.push(n); }
   return [
+    { k: 'shell', title: 'أكواد فاضية (كود وتاريخ بدون بيانات أمر شغل — مش بتتحسب كأوامر)', items: srt(S.wos.filter(woShell)), render: wo },
     W('type', 'أوامر شغل بدون نوع شبكة', w => !w.type), W('job', 'أوامر شغل بدون نوع الأعمال', w => !w.job), W('loc', 'أوامر شغل بدون موقع', w => !w.loc), W('req', 'أوامر شغل بدون الأعمال المطلوبة', w => !w.req),
     W('eng', 'أوامر شغل بدون مسؤول', w => !w.eng), W('tech', 'أوامر شغل بدون قائم بالعمل', w => !w.tech),
     W('rep', 'أوامر منجزة بدون تقرير عن العمل المنفذ', w => !w.report && (w.status || 'pass') === 'pass'),
     W('guess', 'أوامر تاريخها مفترض (راجعها)', w => w.dateGuess), W('fut', 'أوامر تاريخها في المستقبل', w => w.date && w.date > today()), W('dup', 'أكواد أوامر شغل مكررة', w => cnt[w.code] > 1),
+    W('dnum', 'أمر شغل تاريخه بعيد عن ترتيب الكود (راجع التاريخ)', w => dateOff(w)),
     { k: 'gap', title: 'أرقام ناقصة من تسلسل الأكواد (آخر 600 رقم)', items: gaps, render: n => `<div class="issue"><span dir="ltr" style="flex:0 0 120px;text-align:right">${n}</span><span class="muted">رقم مفقود في التسلسل</span></div>` },
     { k: 'mat', title: 'سطور خامات فيها نواقص', items: S.mats.map(m => ({ m, f: matFlags(m) })).filter(x => x.f.length), render: mrow }
   ];
@@ -1272,6 +1277,21 @@ let chkT; function chkSoon() {
   }, 120);
 }
 
+
+/* تاريخ أمر بعيد جداً (أكتر من 45 يوم) عن متوسط جيرانه في تسلسل الأكواد: غالباً خطأ في اليوم أو الشهر */
+let _dOff = null, _dOffN = -1;
+function dateOff(w) {
+  if (_dOffN !== S.wos.length) {
+    _dOffN = S.wos.length; _dOff = new Set();
+    const byY = {};
+    S.wos.filter(woReal).forEach(x => { const m = /-(\d+)(?:\/.*)?$/.exec(x.code); if (m && /^\d{4}-\d\d-\d\d$/.test(x.date)) (byY[x.date.slice(0, 4)] = byY[x.date.slice(0, 4)] || []).push({ x, n: +m[1], t: Date.parse(x.date) }); });
+    Object.values(byY).forEach(l => {
+      l.sort((p, q) => p.n - q.n);
+      l.forEach((o, i) => { const nb = [...l.slice(Math.max(0, i - 6), i), ...l.slice(i + 1, i + 7)].map(v => v.t).sort((a, b) => a - b); if (nb.length < 6) return; const med = nb[nb.length >> 1]; if (Math.abs(o.t - med) > 45 * 864e5) _dOff.add(o.x.id); });
+    });
+  }
+  return _dOff.has(w.id);
+}
 
 ;
 /* ========== الإعدادات والاستيراد ========== */
@@ -1893,7 +1913,7 @@ const isCor = j => j === 'صيانة تصحيحية' || j === 'محضر عطل';
 let IN_RECS = [];
 function inCompute() {
   const mk = (w, src) => ({ date: w.date, loc: w.loc || '', job: w.job, req: w.req || '', code: w.code || '', src });
-  const all = S.wos.map(w => mk(w, 2026)).concat((S.arch?.wos || []).map(w => mk(w, 2025))).filter(w => w.date); IN_RECS = all;
+  const all = S.wos.filter(woReal).map(w => mk(w, 2026)).concat((S.arch?.wos || []).map(w => mk(w, 2025))).filter(w => w.date); IN_RECS = all;
   const td = today(), per = IN.period === 'all' ? 99999 : +IN.period, from = addDays(td, -per), prevFrom = addDays(td, -2 * per), first = all.reduce((m, w) => w.date < m ? w.date : m, td);
   const sites = new Map(), get = n => sites.get(n) || sites.set(n, { name: n, cor: 0, corP: 0, corPrev: 0, pm: [], faults: {}, lastCor: '', n: 0, raw: new Set() }).get(n);
   all.forEach(w => {
@@ -2789,9 +2809,9 @@ function remindersList() {
   const r = [], now = Date.now(), days = +(S.cfg && S.cfg.remindDays) || 3;
   if (!ME) return r;
   if (lvl('log') >= 1) {
-    const late = S.wos.filter(w => (w.status || 'pass') !== 'pass' && w.date && w.date <= ymdAgo(days));
+    const late = S.wos.filter(woReal).filter(w => (w.status || 'pass') !== 'pass' && w.date && w.date <= ymdAgo(days));
     if (late.length) r.push({ id: 'late', sev: 'bad', icon: '', text: `${late.length} أمر شغل لسه مش منجز من أكتر من ${days} أيام`, page: 'log', flag: 'late' });
-    const miss = S.wos.filter(w => (w.status || 'pass') === 'pass' && (!one(w.tech) || !one(w.report)));
+    const miss = S.wos.filter(woReal).filter(w => (w.status || 'pass') === 'pass' && (!one(w.tech) || !one(w.report)));
     if (miss.length) r.push({ id: 'miss', sev: 'warn', icon: '', text: `${miss.length} أمر شغل منجز ينقصه الفني أو تقرير العمل`, page: 'log', flag: 'miss' });
   }
   if (lvl('mats') >= 1) { const orph = S.mats.filter(m => m.wo && !woIdx.has(m.wo)).length; if (orph) r.push({ id: 'orph', sev: 'warn', icon: '', text: `${orph} سطر خامات مربوط بأمر شغل مش موجود`, page: 'check' }); }
@@ -2824,7 +2844,15 @@ let nfSeenPrev = 0;
 Object.assign(ACT, {
   nfgo: a => { NF.open = false; nfPaint(); const p = a.dataset.p, f = a.dataset.f; if (!p) return; if (p === 'log') { LF.flag = f || ''; LF.page = 0; LF.q = ''; LF.month = ''; LF.status = ''; } go(p); },
   nfperm: () => { try { Notification.requestPermission().then(nfPaint); } catch (e) { } },
-  lfclear: () => { LF.flag = ''; viewLog(); }
+  lfclear: () => { LF.flag = ''; viewLog(); },
+  lfshell: () => { LF.shell = !LF.shell; LF.page = 0; viewLog(); },
+  lfshelldel: async () => {
+    const sh = S.wos.filter(woShell); if (!sh.length) return;
+    if (!(await askAsync(`حذف ${sh.length} كود فاضي (كود وتاريخ بدون أي بيانات أمر شغل)؟ هتتحفظ لقطة احتياطية قبل الحذف.`, 'حذف'))) return;
+    try { await autoSnapshot('قبل حذف الأكواد الفاضية'); } catch (e) { }
+    const ids = new Set(sh.map(w => w.id)); S.wos = S.wos.filter(w => !ids.has(w.id)); reindex(); save('wos');
+    try { logAct('حذف ' + sh.length + ' كود فاضي'); } catch (e) { } LF.shell = false; toast('تم حذف ' + sh.length + ' كود فاضي'); viewLog();
+  }
 });
 /* لما تفتح الجرس: نحتفظ بآخر وقت قراءة سابق عشان نبرز الجديد */
 { const ob = () => { const el = $('#bell'); if (el) el.addEventListener('mousedown', () => { nfSeenPrev = nfSeen(); }, true); }; setTimeout(ob, 0); document.addEventListener('mousedown', e => { if (e.target.closest && e.target.closest('#bell')) nfSeenPrev = nfSeen(); }, true); }
@@ -3115,6 +3143,31 @@ function pzMount() {
   const bell = top.querySelector('.bellw'); const ref = bell || null; top.insertBefore(l, ref); top.insertBefore(b, l);
   const lp = () => { l.textContent = LANG.cur === 'en' ? 'عربي' : 'EN'; }; lp(); l.addEventListener('click', () => setTimeout(lp, 0));
 }
+
+;
+/* ========== حارس البيانات: مراجعة دورية تلقائية ==========
+   بيشتغل بعد الدخول، وكل 3 دقايق، ولما التبويب يرجع قدام المستخدم، وبعد أي تحديث جاي من السحابة.
+   1) بينضّف المسافات الزايدة في نصوص أوامر الشغل (تعديل آمن).
+   2) بيحدّث عدّاد "فحص البيانات" في القايمة.
+   3) لو ظهرت مشاكل جديدة بيبلّغ المالك. الأكواد الفاضية مش بتتحسب كأوامر شغل في أي شاشة. */
+const GUARD = { last: 0, sig: '', n: 0 };
+function guardRun(silent) {
+  if (!window.ME || !Array.isArray(S.wos)) return;
+  let fixed = 0; const F = ['loc', 'type', 'job', 'req', 'eng', 'tech', 'report', 'matsText'];
+  if (typeof canWriteKey !== 'function' || canWriteKey('wos')) {
+    S.wos.forEach(w => F.forEach(k => { const v = w[k]; if (typeof v === 'string') { const t = v.replace(/ /g, ' ').replace(/[ \t]{2,}/g, ' ').trim(); if (t !== v) { w[k] = t; fixed++; } } }));
+    if (fixed) { reindex(); save('wos'); }
+  }
+  const secs = checkSections(), shell = (secs.find(s => s.k === 'shell') || { items: [] }).items.length, tot = secs.reduce((a, s) => a + s.items.length, 0), dup = (secs.find(s => s.k === 'dup') || { items: [] }).items.length;
+  GUARD.last = Date.now(); const sig = [shell, dup, tot].join('/');
+  if (typeof chkSoon === 'function') chkSoon();
+  if (!silent && sig !== GUARD.sig && GUARD.sig && (tot > GUARD.n) && isOwner() && typeof notify === 'function') notify({ to: ME.id, title: 'مراجعة البيانات', body: `ظهرت ملاحظات جديدة (${tot - GUARD.n}). الأكواد الفاضية: ${shell}، المكررة: ${dup}.`, page: 'check' });
+  GUARD.sig = sig; GUARD.n = tot; return { shell, dup, tot, fixed };
+}
+setInterval(() => guardRun(), 3 * 60 * 1000);
+document.addEventListener('visibilitychange', () => { if (!document.hidden && Date.now() - GUARD.last > 60000) guardRun(); });
+{ const _bn = buildNav; buildNav = function () { _bn.apply(this, arguments); setTimeout(() => guardRun(true), 1500); }; }
+if (typeof Cloud !== 'undefined' && Cloud.refresh && !Cloud.refresh.__g) { const _rf = Cloud.refresh; Cloud.refresh = function () { const r = _rf.apply(this, arguments); setTimeout(() => guardRun(), 800); return r; }; Cloud.refresh.__g = 1; }
 
 ;
 /* نقطة التشغيل: بيشتغل بعد تحميل كل الوحدات اللي قبله */
