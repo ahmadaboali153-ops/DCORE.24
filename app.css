@@ -646,19 +646,19 @@ body,button,input,select,textarea,table,.rep,.abt,.abt *,.abkt b,.abkt span,.abl
 .top .btn,.top .pzbtn{min-height:34px;padding:0 14px;font-size:13px}
 /* سجل أوامر الشغل: كود أقصى اليمين، أعمدة ثابتة، ومفيش فراغ في النص */
 #logTable .tblwrap{border:1px solid var(--dc-border,#DCE3EE);border-radius:12px;background:#fff;overflow:auto}
-#logTable table.t{table-layout:fixed;width:100%;min-width:1080px;border-collapse:collapse}
+#logTable table.t{table-layout:fixed;width:100%;min-width:1260px;border-collapse:collapse}
 #logTable table.t th{position:sticky;top:0;background:#F3F6FB;color:#44546A;font-size:12.5px;font-weight:700;text-align:right;padding:10px 12px;border-bottom:1px solid #DCE3EE;white-space:nowrap}
 #logTable table.t td{padding:10px 12px;vertical-align:top;text-align:right;border-bottom:1px solid #EEF2F7;font-size:13.5px;line-height:1.55;overflow:hidden;text-overflow:ellipsis}
 #logTable table.t tr.row:hover td{background:#F7F9FD}
-#logTable table.t th:nth-child(1),#logTable table.t td:nth-child(1){width:132px;overflow:visible;text-overflow:clip}
-#logTable table.t th:nth-child(2),#logTable table.t td:nth-child(2){width:112px}
-#logTable table.t th:nth-child(3),#logTable table.t td:nth-child(3){width:170px}
-#logTable table.t th:nth-child(4),#logTable table.t td:nth-child(4){width:132px}
-#logTable table.t th:nth-child(5),#logTable table.t td:nth-child(5){width:112px}
-#logTable table.t th:nth-child(7),#logTable table.t td:nth-child(7){width:120px}
-#logTable table.t th:nth-child(8),#logTable table.t td:nth-child(8){width:130px}
-#logTable table.t th:nth-child(9),#logTable table.t td:nth-child(9){width:84px}
-#logTable table.t th:nth-child(10),#logTable table.t td:nth-child(10){width:64px;text-align:center}
+#logTable table.t th:nth-child(1),#logTable table.t td:nth-child(1){width:120px;overflow:visible;text-overflow:clip}
+#logTable table.t th:nth-child(2),#logTable table.t td:nth-child(2){width:104px}
+#logTable table.t th:nth-child(3),#logTable table.t td:nth-child(3){width:160px}
+#logTable table.t th:nth-child(4),#logTable table.t td:nth-child(4){width:112px}
+#logTable table.t th:nth-child(5),#logTable table.t td:nth-child(5){width:104px}
+#logTable table.t th:nth-child(7),#logTable table.t td:nth-child(7){width:112px}
+#logTable table.t th:nth-child(8),#logTable table.t td:nth-child(8){width:120px}
+#logTable table.t th:nth-child(9),#logTable table.t td:nth-child(9){width:76px}
+#logTable table.t th:nth-child(10),#logTable table.t td:nth-child(10){width:56px;text-align:center}
 #logTable td.wcode{font-weight:700;color:var(--pri-d);font-variant-numeric:tabular-nums;white-space:nowrap}
 #logTable td.wdt b{display:block;font-weight:600}
 #logTable td.wdt small{color:#6B7A90}
@@ -673,3 +673,26 @@ body,button,input,select,textarea,table,.rep,.abt,.abt *,.abkt b,.abkt span,.abl
 .wpc.miss{cursor:default;display:flex;align-items:center;justify-content:center}
 .wpx{position:absolute;top:6px;inset-inline-start:6px;width:26px;height:26px;border-radius:50%;border:0;background:rgba(20,30,45,.72);color:#fff;font-size:17px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center}
 .wpx:hover{background:#B42318}
+/* مؤشر ربط الشيت: دائرة صغيرة + بطاقة شرح */
+.lnk{position:relative;display:inline-flex;align-items:center;margin-inline-end:10px}
+.lnk>span,.lnk>i{all:unset}
+.lnkdot{width:30px;height:30px;min-height:0;padding:0;border-radius:50%;border:1px solid #DCE3EE;background:#fff;box-shadow:none;display:inline-flex;align-items:center;justify-content:center;cursor:pointer}
+.lnkdot:hover{background:#F3F6FB;box-shadow:none}
+.lnkdot i{width:12px;height:12px;border-radius:50%;background:#98A2B3;display:block}
+.lnk.ok .lnkdot i,.lnk.ok .lph i{background:#16A34A;box-shadow:0 0 0 3px rgba(22,163,74,.18)}
+.lnk.warn .lnkdot i,.lnk.warn .lph i{background:#D97706;box-shadow:0 0 0 3px rgba(217,119,6,.18)}
+.lnk.bad .lnkdot i,.lnk.bad .lph i{background:#DC2626;box-shadow:0 0 0 3px rgba(220,38,38,.18)}
+.lpop{display:none;position:absolute;top:calc(100% + 8px);left:0;right:auto;z-index:60;width:320px;max-width:86vw;background:#fff;border:1px solid #DCE3EE;border-radius:12px;box-shadow:0 12px 32px rgba(20,43,74,.18);padding:12px 14px;font-size:13px;line-height:1.6;text-align:right;white-space:normal}
+.lnk:hover .lpop,.lnk:focus-within .lpop,.lpop.on{display:block}
+.lph{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.lph i{width:10px;height:10px;border-radius:50%;background:#98A2B3;flex:none}
+.lph b{font-size:13.5px;color:#172638}
+.lpr{display:flex;justify-content:space-between;gap:12px;padding:3px 0;border-top:1px solid #F0F3F8}
+.lpr span{color:#6B7A90;flex:none}.lpr b{font-weight:600;color:#172638;word-break:break-word;text-align:left}
+.lpn{margin:8px 0 0;color:#44546A}.lpn.bad{color:#B42318}
+.lpa{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+/* التاريخ والوقت في الشريط العلوي */
+.dtclk{display:inline-flex;flex-direction:column;align-items:flex-start;line-height:1.25;margin-inline-end:12px;padding:0 4px;white-space:nowrap}
+.dtclk b{font-size:15px;font-weight:700;color:#172638;font-variant-numeric:tabular-nums}
+.dtclk small{font-size:11.5px;color:#6B7A90}
+[dir=ltr] .lpop{left:auto;right:0}
