@@ -696,3 +696,11 @@ body,button,input,select,textarea,table,.rep,.abt,.abt *,.abkt b,.abkt span,.abl
 .dtclk b{font-size:15px;font-weight:700;color:#172638;font-variant-numeric:tabular-nums}
 .dtclk small{font-size:11.5px;color:#6B7A90}
 [dir=ltr] .lpop{left:auto;right:0}
+/* الصفحة الشخصية */
+.av img{width:100%;height:100%;object-fit:cover;border-radius:50%;display:block}
+.av.lg{width:64px;height:64px;font-size:22px}.av.xl{width:96px;height:96px;font-size:32px}
+.pfhead{display:flex;gap:18px;align-items:center;margin:6px 0 18px}.pfhead h2{margin:0 0 4px;font-size:21px}
+.pfme{max-width:760px}
+.pfteam{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:14px}
+.pfc{background:#fff;border:1px solid #DCE3EE;border-radius:14px;padding:18px 16px;display:flex;flex-direction:column;align-items:center;gap:4px;text-align:center}
+.pfc b{margin-top:8px;font-size:15px}.pfc span{font-size:13px}.pfc p{font-size:12.5px;color:#44546A;margin:6px 0 0}
