@@ -1051,3 +1051,38 @@ td input[type=text],td input[type=date],td input[type=time],td input[type=number
 [data-theme=dark] .kd,[data-theme=dark] .dl,[data-theme=dark] .xlw{background:#12373D;color:#9AEBE0}
 [data-theme=dark] .kd.k1{background:#0F3350;color:#8CC8F0}[data-theme=dark] .kd.k2{background:#103A28;color:#7FE0AE}
 [data-theme=dark] .abc *,[data-theme=dark] .abpc *,[data-theme=dark] .abkt *{color:inherit}[data-theme=dark] .abc h3,[data-theme=dark] .abc h4,[data-theme=dark] .abpc h4{color:var(--k-deep)}
+
+/* شريط أدوات السجل المطوي */
+.view .tools{align-items:center}
+.kz-mt{gap:8px}.kz-mt em{font:700 11px 'Inter',sans-serif;font-style:normal;background:var(--k-amb2);color:#fff;border-radius:99px;padding:1px 7px}
+.kz-more{flex-basis:100%;display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:12px 14px;margin-top:2px;border-radius:16px;background:var(--k-card);border:1px dashed #9ED9D3;animation:kzin .25s var(--k-e) both}
+.kz-more[hidden]{display:none}
+[data-theme=dark] .kz-more{border-color:#1F6A6E}
+
+/* ====================== شاشة تسجيل الدخول ====================== */
+#loginOv{background:radial-gradient(900px 600px at 80% -10%,rgba(52,230,211,.28),transparent 60%),radial-gradient(700px 500px at 0% 110%,rgba(240,127,19,.14),transparent 60%),linear-gradient(145deg,#073F47 0%,#052A31 55%,#031E24 100%);font-family:var(--k-ff)}
+#loginOv .lgglow{background:radial-gradient(circle at 1px 1px,rgba(52,230,211,.14) 1px,transparent 0);background-size:28px 28px}
+#loginOv .lgglow .dk-flow{position:absolute;inset:0;width:100%;height:100%}
+.lgtop{left:auto;right:auto;inset-inline-start:34px;direction:ltr}
+.kz-lgl{display:flex;align-items:center;gap:12px;color:#fff}
+.kz-lgl svg{width:46px;height:46px;filter:drop-shadow(0 0 14px rgba(52,230,211,.55))}
+.kz-lgl b{display:block;font:900 26px/1 'Inter',sans-serif;letter-spacing:-.5px}
+.kz-lgl small{display:block;margin-top:5px;font:600 9.5px/1 'Inter',sans-serif;letter-spacing:.22em;color:#7FE3D9}
+.lgcard{border-radius:28px;padding:36px 32px 28px;background:rgba(255,255,255,.96);box-shadow:0 40px 90px rgba(0,0,0,.5),0 0 0 1px rgba(52,230,211,.35),0 0 60px rgba(52,230,211,.18);animation:kzpop .5s var(--k-e) both}
+.lgcard .fold{display:none}
+.lgsub{color:var(--k-t);text-align:start}
+.lgcard h2{font:800 28px/1.2 var(--k-ff);color:var(--k-deep);letter-spacing:-.3px}
+.lgcard label{color:var(--k-deep)}
+.lgcard .fld input{border:1.5px solid #BFE0DB;border-radius:13px;background:#F4FAF9;min-height:48px;color:var(--k-ink)}
+.lgcard .fld input:focus{border-color:var(--k-t);background:#fff;box-shadow:0 0 0 4px rgba(14,159,150,.18)}
+.fld>svg{stroke:#6FA6A4}.fld .eye svg{stroke:#4F8280}
+.lgcard .lgbtn{min-height:50px!important;border-radius:14px;font-size:16px;background:linear-gradient(180deg,#FFB445,#EF7D12);border:1px solid #D2650F;color:#fff;box-shadow:inset 0 1px 0 rgba(255,255,255,.4),0 8px 22px rgba(240,127,19,.4)}
+.lgcard .lgbtn:hover{background:linear-gradient(180deg,#FFC060,#F68A22);transform:translateY(-2px);box-shadow:0 14px 28px rgba(240,127,19,.5)}
+.lge{color:#B42318}
+.kz-lgt{font:500 14px 'Inter',sans-serif;color:#BFEAE5;text-align:center;margin-top:-6px}
+.lgcap{color:rgba(127,227,217,.75)}
+#loginOv .lgglow{z-index:0}.lgdoc,.lgtop{z-index:3}
+[data-theme=dark] .lgcard{background:rgba(11,36,41,.94);box-shadow:0 40px 90px rgba(0,0,0,.6),0 0 0 1px rgba(52,230,211,.35)}
+[data-theme=dark] .lgcard h2,[data-theme=dark] .lgcard label{color:#E8FBF8}
+[data-theme=dark] .lgcard .fld input{background:#0A2227;border-color:#1F4A52;color:#DDF1EE}
+@media(max-width:560px){.lgtop{inset-inline-start:50%;transform:translateX(-50%)}[dir=rtl] .lgtop{transform:translateX(50%)}}
